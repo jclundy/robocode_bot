@@ -12,6 +12,8 @@ public class JosephRobot1 extends AdvancedRobot
 {
 
 	double bearingTargetWrtGlobal = 0;
+	double targetDistance = 0;
+	double maxDistance = 1;
 	/**
 	 * run: JosephRobot1's default behavior
 	 */
@@ -57,7 +59,11 @@ public class JosephRobot1 extends AdvancedRobot
 			setTurnGunLeft(turretRotation);
 		}
 
-		fire(3);
+		targetDistance = e.getDistance();
+			
+		maxDistance = max(maxDistance, targetDistance);
+		double firePower = 3 - targetDistance/maxDistance * 2.9;
+		setFire(firePower);
 //		ahead(50);
 	}
 
