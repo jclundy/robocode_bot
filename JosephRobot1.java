@@ -8,7 +8,7 @@ import static java.lang.Math.*;
 /**
  * JosephRobot1 - a robot by (your name here)
  */
-public class JosephRobot1 extends Robot
+public class JosephRobot1 extends AdvancedRobot
 {
 
 	double bearingTargetWrtGlobal = 0;
@@ -17,7 +17,9 @@ public class JosephRobot1 extends Robot
 	 */
 	public void run() {
 		// Initialization of the robot should be put here
-
+		setAdjustGunForRobotTurn(true);
+		setAdjustRadarForGunTurn(true);
+		setTurnRadarRight(Double.POSITIVE_INFINITY);
 		// After trying out your robot, try uncommenting the import at the top,
 		// and the next line:
 
@@ -27,7 +29,7 @@ public class JosephRobot1 extends Robot
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
 			ahead(50);
-			turnRadarLeft(360);
+			//turnRadarLeft(45);
 		}
 	}
 
@@ -50,9 +52,9 @@ public class JosephRobot1 extends Robot
 
 		double turretRotation = abs(bearingGunWrtTarget);
 		if(bearingGunWrtTarget > 0) {
-			turnGunRight(turretRotation);
+			setTurnGunRight(turretRotation);
 		} else {
-			turnGunLeft(turretRotation);
+			setTurnGunLeft(turretRotation);
 		}
 
 		fire(3);
@@ -73,7 +75,7 @@ public class JosephRobot1 extends Robot
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
 		back(20);
-		turnRight(90);
-		turnGunLeft(90);
+		setTurnRight(90);
+		//turnGunLeft(90);
 	}	
 }
