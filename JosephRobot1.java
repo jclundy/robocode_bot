@@ -22,11 +22,16 @@ public class JosephRobot1 extends AdvancedRobot
 		setAdjustGunForRobotTurn(true);
 		setAdjustRadarForGunTurn(true);
 		setTurnRadarRight(Double.POSITIVE_INFINITY);
+
+		double fieldHeight = getBattleFieldHeight();
+		double fieldWidth = getBattleFieldWidth();
+		maxDistance = sqrt(fieldHeight * fieldHeight  + fieldWidth * fieldWidth);
 		// After trying out your robot, try uncommenting the import at the top,
 		// and the next line:
 
 		// setColors(Color.red,Color.blue,Color.green); // body,gun,radar
 
+		//setAhead(50);
 		// Robot main loop
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
@@ -61,10 +66,8 @@ public class JosephRobot1 extends AdvancedRobot
 
 		targetDistance = e.getDistance();
 			
-		maxDistance = max(maxDistance, targetDistance);
 		double firePower = 3 - targetDistance/maxDistance * 2.9;
 		setFire(firePower);
-//		ahead(50);
 	}
 
 	/**
