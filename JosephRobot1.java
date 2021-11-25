@@ -14,6 +14,19 @@ public class JosephRobot1 extends AdvancedRobot
 	double bearingTargetWrtGlobal = 0;
 	double targetDistance = 0;
 	double maxDistance = 1;
+	
+	double bearingGunWrtTarget;
+	boolean targetSighted = false;
+	double gunBearingThreshold = 5.0;
+
+	double targetHeading = 0;
+	double targetSpeed = 0;
+
+	boolean collisionOccured = true;
+	double collisionHeading = 0;
+	
+	double direction = 1;
+	 
 	/**
 	 * run: JosephRobot1's default behavior
 	 */
@@ -29,14 +42,36 @@ public class JosephRobot1 extends AdvancedRobot
 		// After trying out your robot, try uncommenting the import at the top,
 		// and the next line:
 
+		targetHeading = 0;
 		// setColors(Color.red,Color.blue,Color.green); // body,gun,radar
 
-		//setAhead(50);
+//		setAhead(5);
 		// Robot main loop
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
-			ahead(50);
+			//ahead(50);
 			//turnRadarLeft(45);
+			if (targetSighted && abs(bearingGunWrtTarget) < gunBearingThreshold) {		
+				double firePower = 3 - targetDistance/maxDistance * 2.9;
+				setFire(firePower);
+			}
+			checkCollision(5);
+			double headingError = normalizeAngleErrorDegrees(targetHeading - getHeading());
+
+			double turnRate = 10 * Math.abs(headingError) / 180;
+			targetSpeed = 8 - 8 * Math.abs(headingError) / 180;
+
+			if(headingError > 0) {
+				setTurnRight(turnRate);
+			} else {
+				setTurnLeft(turnRate);
+			} 
+			
+			if(direction > 0) {
+				ahead(targetSpeed);
+			} else {
+				back(targetSpeed);
+			}
 		}
 	}
 
@@ -53,7 +88,7 @@ public class JosephRobot1 extends AdvancedRobot
 		
 		bearingTargetWrtGlobal = bearingTargetWrtBody + heading;
 
-		double bearingGunWrtTarget = bearingTargetWrtGlobal - bearingGunWrtGlobal;
+		bearingGunWrtTarget = bearingTargetWrtGlobal - bearingGunWrtGlobal;
 
 		bearingGunWrtTarget = ((bearingGunWrtTarget + 180) % 360) - 180;		
 
@@ -65,9 +100,8 @@ public class JosephRobot1 extends AdvancedRobot
 		}
 
 		targetDistance = e.getDistance();
-			
-		double firePower = 3 - targetDistance/maxDistance * 2.9;
-		setFire(firePower);
+		targetSighted = true;
+
 	}
 
 	/**
@@ -83,8 +117,58 @@ public class JosephRobot1 extends AdvancedRobot
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
-		back(20);
-		setTurnRight(90);
+		stop();
+		targetHeading = normalizeAngleDegrees(getHeading() - 180);
+		collisionHeading = getHeading();
+		direction *= -1;
+		// setTurnRight(90);
 		//turnGunLeft(90);
+	}
+	
+	public void checkCollision(int timeSteps) {
+		double speed = getVelocity(); //pixels per turn
+		double heading = getHeadingRadians(); //radians
+		double xSpeed = speed * Math.cos(heading);
+		double ySpeed = speed * Math.sin(heading);
+		
+		double headingCorrection = 0;		
+		double newSpeed = 5;
+		double turnSpeed = 5;
+
+		double predictedPositionX = xSpeed * timeSteps + getX();
+		double predictedPositionY = ySpeed * timeSteps + getY();
+
+		double fieldHeight = getBattleFieldHeight();
+		double fieldWidth = getBattleFieldWidth();
+
+		double xCorrection = 0;		
+		if (predictedPositionX >= fieldWidth) {
+			xCorrection = 1; 
+		} else if (predictedPositionX <= 0) {
+			xCorrection = -1;
+		}
+		
+		double yCorrection = 0;	
+		if (predictedPositionY >= fieldHeight) {
+			yCorrection = 1; 
+		} else if (predictedPositionY <= 0) {
+			yCorrection = -1;
+		}
+		
+		if(yCorrection != 0 || xCorrection != 0) {
+			targetHeading = getHeading() + xCorrection * yCorrection * 90;
+			targetHeading = normalizeAngleDegrees(targetHeading);
+			direction *= -1;
+		}
+		
 	}	
+	
+	public double normalizeAngleDegrees(double angle) {
+		return (angle + 360) % 360;
+	}
+	
+	public double normalizeAngleErrorDegrees(double angle) {
+		return (angle + 360) % 180;
+	}
 }
+
