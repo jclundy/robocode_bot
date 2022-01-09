@@ -1,6 +1,7 @@
 package joerobot1;
 import robocode.*;
 import static java.lang.Math.*;
+
 //import java.awt.Color;
 
 // API help : https://robocode.sourceforge.io/docs/robocode/robocode/Robot.html
@@ -26,6 +27,7 @@ public class JosephRobot1 extends AdvancedRobot
 	double collisionHeading = 0;
 	
 	double direction = 1;
+	double targetDirection = 1;
 	 
 	/**
 	 * run: JosephRobot1's default behavior
@@ -50,22 +52,20 @@ public class JosephRobot1 extends AdvancedRobot
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
 			//ahead(50);
-			//turnRadarLeft(45);
+
+			setTurnRadarLeft(45);
 			if (targetSighted && abs(bearingGunWrtTarget) < gunBearingThreshold) {		
 				double firePower = 3 - targetDistance/maxDistance * 2.9;
 				setFire(firePower);
 			}
-			checkCollision(5);
-			double headingError = normalizeAngleErrorDegrees(targetHeading - getHeading());
+			//checkCollision(5);
+			//double headingError = normalizeAngleErrorDegrees(targetHeading - getHeading());
 
-			double turnRate = 10 * Math.abs(headingError) / 180;
-			targetSpeed = 8 - 8 * Math.abs(headingError) / 180;
+			//double turnRate = 10 * Math.abs(headingError) / 180;
+			//targetSpeed = 8 - 8 * Math.abs(headingError) / 180;
 
-			if(headingError > 0) {
-				setTurnRight(turnRate);
-			} else {
-				setTurnLeft(turnRate);
-			} 
+
+			checkCollision();
 			
 			if(direction > 0) {
 				ahead(targetSpeed);
@@ -117,50 +117,64 @@ public class JosephRobot1 extends AdvancedRobot
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
-		stop();
-		targetHeading = normalizeAngleDegrees(getHeading() - 180);
-		collisionHeading = getHeading();
-		direction *= -1;
+	//	stop();
+	//	targetHeading = normalizeAngleDegrees(getHeading() - 180);
+	//	collisionHeading = getHeading();
+	//	direction *= -1;
 		// setTurnRight(90);
 		//turnGunLeft(90);
 	}
 	
-	public void checkCollision(int timeSteps) {
-		double speed = getVelocity(); //pixels per turn
-		double heading = getHeadingRadians(); //radians
-		double xSpeed = speed * Math.cos(heading);
-		double ySpeed = speed * Math.sin(heading);
+	public void checkCollision() {
+	
+		double x0 = getX();
+		double y0 = getY();
 		
-		double headingCorrection = 0;		
-		double newSpeed = 5;
-		double turnSpeed = 5;
+		double theta = getHeadingRadians() * direction;
+		double phi = Math.PI/2 - theta;
 
-		double predictedPositionX = xSpeed * timeSteps + getX();
-		double predictedPositionY = ySpeed * timeSteps + getY();
+		boolean horizontal = cos(phi) == 0;
+		boolean vertical = sin(phi) == 0;
 
-		double fieldHeight = getBattleFieldHeight();
-		double fieldWidth = getBattleFieldWidth();
+		double m = 0;
+		if(sin(phi) != 0) {
+			m = Math.tan(phi);
+		}
 
-		double xCorrection = 0;		
-		if (predictedPositionX >= fieldWidth) {
-			xCorrection = 1; 
-		} else if (predictedPositionX <= 0) {
-			xCorrection = -1;
+		double b = y0 - m*x0;		
+
+		double W = getBattleFieldWidth();
+		double H = getBattleFieldHeight();
+
+		double R = Math.sqrt(W*W + H*H) / 2;
+		
+		double x2 = W/2 + R*sin(theta);
+		double x1 = maxMinLimit(x2, W, 0);
+		
+		double y2 = H/2 + R*cos(theta);
+
+		if(!horizontal && !vertical) {
+			y2 = m*x2 + b;			
+		}
+		double y1 = maxMinLimit(y2, H, 0);
+		
+		if(!horizontal && !vertical) {
+			x1 = (y1 - b) / m;			
 		}
 		
-		double yCorrection = 0;	
-		if (predictedPositionY >= fieldHeight) {
-			yCorrection = 1; 
-		} else if (predictedPositionY <= 0) {
-			yCorrection = -1;
-		}
+		double distance = Math.sqrt( Math.pow(x1-x0, 2) + Math.pow(y1-y0, 2));
 		
-		if(yCorrection != 0 || xCorrection != 0) {
-			targetHeading = getHeading() + xCorrection * yCorrection * 90;
-			targetHeading = normalizeAngleDegrees(targetHeading);
+		targetSpeed = 8*(Math.tanh(distance + 8) + 1);
+		
+
+		if(distance <= 4) {
 			direction *= -1;
+			targetSpeed = 8;
 		}
-		
+	}
+	
+	public double maxMinLimit(double a, double max, double min) {
+		return Math.min(Math.max(a, min), max);
 	}	
 	
 	public double normalizeAngleDegrees(double angle) {
